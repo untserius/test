@@ -1,1 +1,37 @@
+name: CI/CD
 
+on:
+  push:
+    branches: [deploy-test]
+
+jobs:
+  build:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+      - name: Build project
+        run: mvn clean install -DskipTests
+      - name: Login to Docker Hub
+        run: docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
+      - name: Build Docker Image
+        run: docker build -t seriushub/test .
+      - name: Publish image to Docker Hub
+        run: docker push seriushub/test:latest
+
+  deploy:
+    needs: build
+    runs-on: [aws-ec2]
+
+    steps:
+      - name: Pull Images form Docker Hub
+        run: docker pull seriushub/test:latest
+      - name: Delete Old Container
+        run: docker rm -f test-container
+      - name: Run Docker Container
+        run: docker run -d -p 8080:8080 --name test-container seriushub/test
