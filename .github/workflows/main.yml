@@ -18,11 +18,11 @@ jobs:
       - name: Build project
         run: mvn clean install -DskipTests
       - name: Login to Docker Hub
-        run: docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
+        run: sudo docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
       - name: Build Docker Image
-        run: docker build -t seriushub/test .
+        run: sudo docker build -t seriushub/test .
       - name: Publish image to Docker Hub
-        run: docker push seriushub/test:latest
+        run: sudo docker push seriushub/test:latest
 
   deploy:
     needs: build
@@ -30,8 +30,8 @@ jobs:
 
     steps:
       - name: Pull Images form Docker Hub
-        run: docker pull seriushub/test:latest
+        run: sudo docker pull seriushub/test:latest
       - name: Delete Old Container
-        run: docker rm -f test-container
+        run: sudo docker rm -f test-container
       - name: Run Docker Container
-        run: docker run -d -p 8080:8080 --name test-container seriushub/test
+        run: sudo docker run -d -p 8080:8080 --name test-container seriushub/test
